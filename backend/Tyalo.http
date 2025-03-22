@@ -1,0 +1,6 @@
+@Tyalo_HostAddress = http://localhost:5115
+
+GET {{Tyalo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
