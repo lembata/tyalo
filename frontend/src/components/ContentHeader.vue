@@ -1,9 +1,16 @@
 <script setup>
-import { RouterLink, useRoute } from 'vue-router'
 import { ref } from 'vue'
 import MyRouterLink from "@/components/MyRouterLink.vue";
 
-const route = useRoute()
+const props = defineProps({
+  hideRoutes: Boolean
+});
+// const props = defineProps({
+//   hideRoutes: {
+//     type: Boolean,
+//     default: false
+//   }
+// });
 
 let isDark = ref(localStorage.getItem('tyalo-theme') === 'dark')
 let mobileMenuOpen = ref(false)
@@ -19,10 +26,8 @@ let toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
 }
 
-function isSelected(key) {
-  console.log('Checking if route is selected', key)
-  return route.matched.some((route) => route.name === key)
-}
+console.warn('ContentHeader.vue called', props.hideRoutes)
+
 </script>
 
 <template>
@@ -144,7 +149,7 @@ function isSelected(key) {
     </div>
 
     <div class="flex items-center space-x-4">
-      <nav class="hidden md:flex space-x-4">
+      <nav v-if="!props.hideRoutes" class="hidden md:flex space-x-4">
         <MyRouterLink to="/" text="Dashboard" />
         <MyRouterLink to="/add-measurement" text="Add Measurement" />
         <MyRouterLink to="/data-table" text="Data Table" />
@@ -216,7 +221,7 @@ function isSelected(key) {
 
   <!-- Mobile menu -->
   <div
-    v-if="mobileMenuOpen"
+    v-if="mobileMenuOpen && !props.hideRoutes"
     class="md:hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 mb-6"
   >
     <nav class="flex flex-col space-y-3">

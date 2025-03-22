@@ -44,16 +44,12 @@
 
 <script>
 export default {
+  // eslint-disable-next-line vue/multi-word-component-names
   name: 'Logo'
 }
 </script>
 
 <style>
 /* Import KoHo font */
-@import url('https://fonts.googleapis.com/css2?family=KoHo:wght@700&display=swap');
-
-.font-koho {
-  font-family: 'KoHo', sans-serif;
-}
 </style>
 

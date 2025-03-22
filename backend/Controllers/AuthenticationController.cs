@@ -5,7 +5,7 @@ namespace Tyalo.Controllers;
 
 [ApiController]
 [Route("api/authentication")]
-public class AuthenticationController : Controller
+public class AuthenticationController : BaseController
 {
 	[HttpPost("register")]
 	public async Task<IActionResult> RegisterUser([FromServices] Authentication authentication,
@@ -13,37 +13,44 @@ public class AuthenticationController : Controller
 	{
 		if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
 		{
-			return BadRequest();
+			return Failure("Email and password are required");
 		}
 
-		if (!configuration.GetValue("AllowRegistration", false))
-		{
-			return Forbid();
-		}
+		// if (!configuration.GetValue("AllowRegistration", false))
+		// {
+		// 	return Forbid();
+		// }
 
-		await authentication.RegisterUser(request);
-		return Ok();
+		var error = await authentication.RegisterUser(request);
+
+		return error is not null
+			? Failure(error)
+			: Success();
 	}
 
 	[HttpPost("login")]
 	public async Task<IActionResult> Login([FromServices] Authentication authentication,
 		[FromBody] Authentication.LoginRequest request)
 	{
-		var result = await authentication.Login(request);
+		var (result , errorMessage) = await authentication.Login(request);
 
 		if (result is null)
 		{
-			return Unauthorized();
+			return Failure(errorMessage ?? "Unknown error");
 		}
 
-		return Json(result);
+		return Data(result);
 	}
 
-	[HttpPost("refresh-token")]
+	[HttpPost("refresh")]
 	public async Task<IActionResult> RefreshToken([FromServices] Authentication authentication,
 		[FromQuery] string refreshToken)
 	{
-		var result = await authentication.RefreshToken(refreshToken);
-		return Json(result);
+		var (result, error) = await authentication.RefreshToken(refreshToken);
+		if (error is not null)
+		{
+			return Failure(error);
+		}
+		return Data(result);
 	}
 }

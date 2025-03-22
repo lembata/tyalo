@@ -1,19 +1,25 @@
 <script setup>
-import Logo from "@/components/Logo.vue";
 import API from "@/api";
 import {ref} from "vue";
 import LoginPage from "@/views/LoginPage.vue";
 import ContentView from "@/views/ContentView.vue";
 
-let isDark = ref(localStorage.getItem('tyalo-theme') === 'dark' );
+let isDark = ref(localStorage.getItem('tyalo-theme') === 'dark');
 let isLoggedIn = ref(API.IsLoggedIn());
 
-let toggleTheme = () => {
-  isDark.value = !isDark.value;
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('tyalo-theme', isDark.value ? 'dark' : 'light');
-  }
-};
+console.log("App called")
+
+// onMounted(() => {
+//   console.log("On mounted called")
+//   if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+//     const savedTheme = localStorage.getItem('tyalo-theme');
+//     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+//       isDark.value = true;
+//     }
+//   }
+//
+//   isLoggedIn.value = API.IsLoggedIn();
+// });
 
 </script>
 
@@ -26,8 +32,6 @@ let toggleTheme = () => {
       <div class="absolute inset-0 dot-pattern opacity-10 dark:opacity-20"></div>
 
       <div class="container mx-auto px-4 py-8 relative z-10">
-
-
         <ContentView v-if="isLoggedIn" />
         <LoginPage v-else/>
       </div>
@@ -41,8 +45,8 @@ let toggleTheme = () => {
 }
 
 .dot-pattern {
-  --dotSize: 0.25rem;
-  --bgSize: 1.35rem;
+  --dotSize: 0.15rem;
+  --bgSize: 1rem;
   --bgPosition: calc(var(--bgSize) / 2);
 
   background-image: radial-gradient(

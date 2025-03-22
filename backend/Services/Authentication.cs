@@ -22,70 +22,74 @@ public class Authentication(
         [JsonPropertyName("refresh_token")] public required string RefreshToken { get; init; }
     }
 
-    public async Task RegisterUser(LoginRequest request)
+    public async Task<string?> RegisterUser(LoginRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return  "Email and password are required";
+        }
+
+        if (await db.Users.AnyAsync(u => u.Email == request.Email))
+        {
+            return "User with this email already exists";
+        }
+
+        var salt = Password.GenerateSalt();
+
         User user = new User
         {
             Email = request.Email,
-            Salt = Password.GenerateSalt(),
-            PasswordHash = Password.Hash(request.Password, Password.GenerateSalt())
+            Salt = salt,
+            PasswordHash = Password.Hash(request.Password, salt)
         };
 
         db.Users.Add(user);
         await db.SaveChangesAsync();
+        return null;
     }
 
-    public async Task<LoginResponse?> Login(LoginRequest request)
+    public async Task<(LoginResponse? response,  string? errorMessage)> Login(LoginRequest request)
     {
         User? user = await db.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (user is null)
         {
-            return null;
+            return (null, "User not found");
         }
 
         if (!Password.Verify(request.Password, user.Salt, user.PasswordHash))
         {
-            return null;
+            return (null, "Invalid password");
         }
 
-        return new LoginResponse
+        return (new LoginResponse
         {
             AccessToken = tokenGenerator.GenerateToken(user.Id, user.Email),
             RefreshToken = await refreshTokenGenerator.GenerateToken(user),
-        };
+        }, null);
     }
 
 
-    public async Task<LoginResponse?> RefreshToken(string refreshToken)
+    public async Task<(LoginResponse?, string?)> RefreshToken(string refreshToken)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            return null;
+            return (null, "Refresh token is required");
         }
 
-        RefreshToken? token = await db.RefreshTokens
-            .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Token == refreshToken);
+        (var newRefresh, string? error) = await refreshTokenGenerator
+            .RegenerateToken(refreshToken);
 
-        if (token is null || token.Revoked)
+        if (newRefresh is null || error is not null)
         {
-            return null;
+            return (null, error ?? "Unknown error");
         }
 
-        if (token.Expires < DateTime.UtcNow)
+        return (new LoginResponse
         {
-            db.RefreshTokens.Remove(token);
-            await db.SaveChangesAsync();
-            //TODO: return a hint that the token has expired
-            return null;
-        }
-
-        return new LoginResponse
-        {
-            AccessToken = tokenGenerator.GenerateToken(token.User!.Id, token.User.Email),
+            AccessToken = tokenGenerator.GenerateToken(newRefresh.User!.Id, newRefresh.User.Email),
             RefreshToken = refreshToken,
-        };
+        }, null);
     }
 }

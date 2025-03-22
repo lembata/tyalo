@@ -40,21 +40,40 @@ builder.Services.AddDbContext<TyaloDbContext>(o =>
     o.UseSqlite("Data Source=tyalo.db");
 });
 
+//builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddScoped<Authentication>();
+builder.Services.AddScoped<RefreshTokenGenerator>();
 builder.Services.AddSingleton<ITokenGenerator>(_ => new TokenGenerator(key));
 
+string MyAllowSpecificOrigins = "MyAllowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy  =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+            policy.WithOrigins("https://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+// // Configure the HTTP request pipeline.
+// if (app.Environment.IsDevelopment())
+// {
+//     app.MapOpenApi();
+// }
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors(MyAllowSpecificOrigins);
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.MapControllers();
 
 app.Run();

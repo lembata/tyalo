@@ -13,6 +13,11 @@ const router = createRouter({
       component: GraphsView,
     },
     {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: GraphsView,
+    },
+    {
       path: '/add-measurement',
       name: 'add-measurement',
       component: MeasurementForm,

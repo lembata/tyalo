@@ -29,7 +29,7 @@ public class ValidateUserIdAttribute : Attribute, IAuthorizationFilter
 
 [Authorize]
 [ValidateUserId]
-public abstract class AuthorizedController : Controller
+public abstract class AuthorizedController : BaseController
 {
 	public long UserId { get; init; }
 
