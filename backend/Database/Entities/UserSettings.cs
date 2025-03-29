@@ -7,6 +7,7 @@ public record UserSettings : Entity
 	public double Height { get; set; }
 	public double StartingWeight { get; set; }
 	public double GoalWeight { get; set; }
+	public double GoalPercentage { get; set; }
 	public DateTime CreatedAt { get; set; }
 	public DateTime ModifiedAt { get; set; }
 	public LengthUnit LengthUnit { get; set; }

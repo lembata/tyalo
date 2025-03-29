@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tyalo.Services;
 
@@ -52,5 +53,15 @@ public class AuthenticationController : BaseController
 			return Failure(error);
 		}
 		return Data(result);
+	}
+
+	[HttpPost("logout")]
+	[Authorize]
+	public async Task<IActionResult> Logout([FromServices] Authentication authentication,
+		[FromQuery] string refreshToken)
+	{
+		return await authentication.Invalidate(refreshToken)
+			? Success()
+			: Failure("Invalid refresh token");
 	}
 }

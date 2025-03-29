@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tyalo.Database;
 
@@ -10,9 +11,11 @@ using Tyalo.Database;
 namespace Tyalo.Migrations
 {
     [DbContext(typeof(TyaloDbContext))]
-    partial class TyaloDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250323142300_added_goals")]
+    partial class added_goals
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.3");

@@ -6,7 +6,8 @@ namespace Tyalo.Database.Entities;
 
 public record User : Entity
 {
-    public required string Email { get; set; }
+    public string Email { get; set; } = "";
     public byte[] PasswordHash { get; set; } = [];
     public byte[] Salt { get; set; } = [];
+    public UserSettings? UserSettings { get; set; }
 }

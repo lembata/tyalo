@@ -19,18 +19,18 @@ public abstract class BaseController : Controller
 		bool Success = false
 	);
 
-	public IActionResult Success()
+	protected IActionResult Success()
 	{
 		return Json(new ApiResult(Success: true));
 	}
 
-	public IActionResult Failure(string message)
+	protected IActionResult Failure(string message)
 	{
 		Response.StatusCode = StatusCodes.Status400BadRequest;
 		return Json(new ApiResult(Message: message, Success: false));
 	}
 
-	public IActionResult Data<T>(T data)
+	protected IActionResult Data<T>(T data)
 	{
 		return Json(new ApiResult<T>(Data: data, Success: true));
 	}

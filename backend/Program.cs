@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Tyalo.Database;
+using Tyalo.Database.Entities;
 using Tyalo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,7 @@ key = File.Exists(tokenKey)
     ? File.ReadAllBytes(tokenKey)
     : Convert.FromHexString(tokenKey);
 
+builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -32,9 +34,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = "http://tyalo.lembata.pro",
             IssuerSigningKey = new SymmetricSecurityKey(key)
         };
-        options.IncludeErrorDetails = true;
+        // options.IncludeErrorDetails = true;
     });
-builder.Services.AddAuthorization();
 builder.Services.AddDbContext<TyaloDbContext>(o =>
 {
     o.UseSqlite("Data Source=tyalo.db");
@@ -44,6 +45,8 @@ builder.Services.AddDbContext<TyaloDbContext>(o =>
 builder.Services.AddControllers();
 builder.Services.AddScoped<Authentication>();
 builder.Services.AddScoped<RefreshTokenGenerator>();
+builder.Services.AddScoped<GoalService>();
+builder.Services.AddScoped<SettingsService>();
 builder.Services.AddSingleton<ITokenGenerator>(_ => new TokenGenerator(key));
 
 string MyAllowSpecificOrigins = "MyAllowSpecificOrigins";
@@ -59,6 +62,9 @@ builder.Services.AddCors(options =>
             policy.WithOrigins("https://localhost:5173")
                 .AllowAnyHeader()
                 .AllowAnyMethod();
+            policy.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
         });
 });
 var app = builder.Build();
@@ -69,11 +75,11 @@ var app = builder.Build();
 //     app.MapOpenApi();
 // }
 
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseCors(MyAllowSpecificOrigins);
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapControllers();
+app.UseCors(MyAllowSpecificOrigins);
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();

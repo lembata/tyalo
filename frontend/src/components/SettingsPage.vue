@@ -19,11 +19,11 @@
                     <label for="weightUnit" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weight</label>
                     <select
                       id="weightUnit"
-                      v-model="settings.units.weight"
+                      v-model=" settings.units.weight"
                       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 dark:focus:ring-orange-700 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
-                      <option value="kg">Kilograms (kg)</option>
-                      <option value="lb">Pounds (lb)</option>
+                      <option :value="WeightUnit.Kilograms">Kilograms (kg)</option>
+                      <option :value="WeightUnit.Pounds">Pounds (lb)</option>
                     </select>
                   </div>
 
@@ -34,8 +34,8 @@
                       v-model="settings.units.length"
                       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 dark:focus:ring-orange-700 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
-                      <option value="cm">Centimeters (cm)</option>
-                      <option value="in">Inches (in)</option>
+                      <option :value="LengthUnit.Centimeters">Centimeters (cm)</option>
+                      <option :value="LengthUnit.Inches">Inches (in)</option>
                     </select>
                   </div>
                 </div>
@@ -47,7 +47,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label for="height" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Height ({{ settings.units.length }})
+                      Height ({{ lengthUnitString }})
                     </label>
                     <input
                       type="number"
@@ -60,7 +60,7 @@
 
                   <div>
                     <label for="startingWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Starting Weight ({{ settings.units.weight }})
+                      Starting Weight ({{ weightUnitString }})
                     </label>
                     <input
                       type="number"
@@ -85,18 +85,30 @@
                 </div>
               </div>
 
+              <div class="flex justify-end space-x-4">
+                <button
+                  type="submit"
+                  @click.prevent="savePersonalSettings"
+                  class="py-2 px-4 bg-gradient-to-r from-teal-600 to-teal-700 dark:from-orange-700 dark:to-orange-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-600 dark:focus:ring-orange-700"
+                >
+                  Save Personal Information Settings
+               </button>
+              </div>
+
+              <hr class="h-px my-8 bg-gray-300 border-0 dark:bg-gray-600">
+
               <!-- Goal Settings -->
               <div class="space-y-4">
                 <h3 class="text-lg font-medium text-gray-800 dark:text-white">Goal Settings</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label for="goalWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Goal Weight ({{ settings.units.weight }})
+                      Goal Weight ({{ weightUnitString }})
                     </label>
                     <input
                       type="number"
                       id="goalWeight"
-                      v-model="settings.goalWeight"
+                      v-model="currentGoal.weight"
                       step="0.1"
                       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 dark:focus:ring-orange-700 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
@@ -110,7 +122,7 @@
                       <input
                         type="number"
                         id="goalPercentage"
-                        v-model="settings.goalPercentage"
+                        v-model="currentGoal.percentage"
                         step="0.1"
                         @input="validateGoalPercentage"
                         class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 dark:focus:ring-orange-700 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -270,58 +282,44 @@
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue';
+import Settings, {LengthUnit, WeightUnit} from "@/settings.js";
+import {useToast} from "vue-toastification";
+import API from "@/api.js";
 
 // Theme toggle
 const isDark = ref(false);
-const mobileMenuOpen = ref(false);
 const goalPercentageWarning = ref('');
 const uploadFileName = ref('');
 const importStatus = ref(null);
+const loading = ref(true);
+const busy = ref(false);
+const toast = useToast();
 
 // Date modal
 const showDateModal = ref(false);
 const newGoalStartDate = ref(new Date().toISOString().split('T')[0]); // Today's date
 
+
 // Settings
 const settings = reactive({
   units: {
-    weight: 'kg',
-    length: 'cm'
+    weight: Settings.weightUnit,
+    length: Settings.lengthUnit,
   },
-  height: 175,
-  startingWeight: 77,
-  startingDate: new Date().toISOString().split('T')[0],
-  goalWeight: 70,
-  goalPercentage: 10,
+  height: Settings.height,
+  startingWeight: Settings.startingWeight,
+  startingDate: Settings.startingDate,
   darkModeDefault: false,
   showTrends: true
 });
 
-// Default settings for reset
-const defaultSettings = {
-  units: {
-    weight: 'kg',
-    length: 'cm'
-  },
-  height: 175,
-  startingWeight: 77,
-  startingDate: new Date().toISOString().split('T')[0],
-  goalWeight: 70,
-  goalPercentage: 10,
-  darkModeDefault: false,
-  showTrends: true
-};
+const currentGoal = reactive({
+  weight: Settings.goalWeight,
+  percentage: Settings.goalPercentage,
+});
 
-const toggleTheme = () => {
-  isDark.value = !isDark.value;
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('tyalo-theme', isDark.value ? 'dark' : 'light');
-  }
-};
-
-const toggleMobileMenu = () => {
-  mobileMenuOpen.value = !mobileMenuOpen.value;
-};
+const weightUnitString = ref(WeightUnit.toString(settings.units.weight))
+const lengthUnitString = ref(LengthUnit.toString(settings.units.length))
 
 const validateGoalPercentage = () => {
   if (settings.goalPercentage > 20) {
@@ -348,32 +346,48 @@ const recalculateGoalFromDate = () => {
   alert(`Goal line recalculated from ${newGoalStartDate.value}`);
 };
 
-const saveSettings = () => {
+// const saveSettings = () => {
+//   busy.value = true;
+//
+//   API.Settings.Update()
+//     .then( response => {
+//       if(response.success){
+//         toast.success('Settings saved successfully!');
+//       } else {
+//         toast.error(response.message);
+//       }
+//     })
+//     .catch(error => {
+//       console.error('Error saving settings:', error);
+//       toast.error('Error saving settings. Please try again later.');
+//     })
+//     .finally(() => busy.value = false);
+// };
+
+const savePersonalSettings = () => {
   console.log('Saving settings:', settings);
-  // Here you would typically save the settings to localStorage or your database
-
-  // Update the theme based on the darkModeDefault setting
-  if (settings.darkModeDefault !== isDark.value) {
-    toggleTheme();
-  }
-
-  alert('Settings saved successfully!');
-};
-
-const resetSettings = () => {
-  // Reset all settings to defaults
-  Object.keys(defaultSettings).forEach(key => {
-    if (typeof defaultSettings[key] === 'object') {
-      Object.keys(defaultSettings[key]).forEach(subKey => {
-        settings[key][subKey] = defaultSettings[key][subKey];
-      });
-    } else {
-      settings[key] = defaultSettings[key];
-    }
+  const newSettings = reactive({
+    weightUnit: settings.units.weight,
+    lengthUnit: settings.units.length,
+    height: settings.height,
+    startingWeight: settings.startingWeight,
+    startingDate: settings.startingDate,
   });
 
-  goalPercentageWarning.value = '';
-};
+  API.Settings.Update(newSettings)
+    .then(response => {
+      console.log('Settings saved:', response.data);
+      if(response.success){
+        toast.success('Settings saved successfully!');
+      } else {
+        toast.error(response.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error saving settings:', error);
+      toast.error('Error saving settings. Please try again later.');
+    });
+}
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
@@ -416,59 +430,44 @@ const handleFileUpload = (event) => {
     };
   };
 
-  reader.readAsText(file);
+  reader.readAsText(file)
 };
 
-const exportData = (format) => {
-  // In a real app, you would fetch all measurements and convert them to CSV
+const exportData = () => {
 
-  // Sample data for demonstration
-  const data = [
-    ['date', 'weight', 'chest', 'waist', 'hips', 'thigh', 'arm', 'bodyFat', 'notes'],
-    ['2023-03-15', '75.5', '95.0', '82.3', '98.1', '55.2', '32.4', '18.5', 'Feeling good today!'],
-    ['2023-03-08', '76.2', '95.5', '83.0', '98.5', '55.5', '32.2', '19.0', 'Had a tough week'],
-    ['2023-03-01', '77.0', '96.0', '84.2', '99.0', '56.0', '32.0', '19.5', 'Starting to see progress']
-  ];
-
-  if (format === 'csv') {
-    // Convert data to CSV
-    const csvContent = data.map(row => row.join(',')).join('\n');
-
-    // Create a blob and download link
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `tyalo-measurements-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
 };
 
-// Watch for changes to goalPercentage
-watch(() => settings.goalPercentage, validateGoalPercentage);
+
+watch(() => currentGoal.goalPercentage, validateGoalPercentage);
+watch(() => settings.units.weight, v => weightUnitString.value = WeightUnit.toString(v));
+watch(() => settings.units.length, v => lengthUnitString.value = LengthUnit.toString(v));
 
 // Initialize theme on component mount
 onMounted(() => {
-  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-    const savedTheme = localStorage.getItem('tyalo-theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      isDark.value = true;
-      settings.darkModeDefault = true;
-    }
-  }
+  API.Settings.Get()
+    .then(result => {
+      if(result.success) {
+        console.log("result", result)
+        settings.units = {
+          length: result.data.lengthUnit,
+          weight: result.data.weightUnit,
+        }
+        settings.height = result.data.height;
+        settings.startingWeight = result.data.startingWeight;
+      } else {
+        toast.error(result.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error loading settings:', error);
+      toast.error('Error loading settings. Please try again later.');
+    })
+    .finally(() => loading.value = false);
 });
 </script>
 
 <style>
 /* Import KoHo font */
-@import url('https://fonts.googleapis.com/css2?family=KoHo:wght@700&display=swap');
-
-.font-koho {
-  font-family: 'KoHo', sans-serif;
-}
-
 .dot-pattern {
   background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
   background-size: 20px 20px;

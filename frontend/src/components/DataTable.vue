@@ -304,13 +304,6 @@ onMounted(() => {
 </script>
 
 <style>
-/* Import KoHo font */
-@import url('https://fonts.googleapis.com/css2?family=KoHo:wght@700&display=swap');
-
-.font-koho {
-  font-family: 'KoHo', sans-serif;
-}
-
 .dot-pattern {
   background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
   background-size: 20px 20px;

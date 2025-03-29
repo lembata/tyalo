@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Tyalo.Database.Entities;
 
 public record RefreshToken : Entity

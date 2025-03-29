@@ -31,11 +31,21 @@ public class ValidateUserIdAttribute : Attribute, IAuthorizationFilter
 [ValidateUserId]
 public abstract class AuthorizedController : BaseController
 {
-	public long UserId { get; init; }
+	public long UserId { get; set; }
 
 	protected AuthorizedController()
 	{
-		UserId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 	}
 
+	public override void OnActionExecuting(ActionExecutingContext context)
+	{
+		var user = context.HttpContext.User;
+		if (user.Identity is ClaimsIdentity identity)
+		{
+			var userIdClaim = identity.FindFirst(ClaimTypes.NameIdentifier);
+			UserId = long.Parse(userIdClaim.Value);
+		}
+
+		base.OnActionExecuting(context);
+	}
 }
